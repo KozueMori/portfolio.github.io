@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>ふわふわ</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+  <style>
+  * {
+    margin:0;
+    padding:0;
+  }
+  html,body { 
+    width: 100%; height: 100%;
+    font-family: 'Roboto', sans-serif;
+    /* background-color: #f9f9f9; */
+  }
+  .wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden; /* これがないとセンターがずれる。*/
+  }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #canvas {
+    z-index: 2;
+  }
+  #canvas2 {
+    z-index: 1;
+    -webkit-filter:url('#goo');
+    filter: url('#goo');
+  }
+  .clockHands {
+    width: 60vmin;
+    height: 60vmin;
+    max-width: 800px;
+    max-height: 800px;
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+    margin: auto;
+    z-index: 3;
+  }
+  .hour {
+    width: 8px;
+    height: 20%;
+    position: absolute;
+    top: calc(50% - 20%);
+    left: calc(50% - 4px);
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform-origin: bottom;
+  }
+  .min {
+    width: 4px;
+    height: 30%;
+    position: absolute;
+    top: calc(50% - 30%);
+    left: calc(50% - 2px);
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform-origin: bottom;
+  }
+  .sec {
+    width: 2px;
+    height: 40%;
+    position: absolute;
+    top: calc(50% - 40%);
+    left: calc(50% - 1px);
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    transform-origin: bottom;
+  }
+  .circles div {
+    width: 2%;
+    height: 2%;
+    background-color: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+  }
+  .degital {
+    color: #777;
+    font-weight: 300;
+    line-height: 1.0;
+    text-align: center;
+    position: absolute;
+    bottom: 30px;
+    right: 55px;
+    z-index: 4;
+  }
+  #time {
+    font-size: 90px;
+  }
+  #date {
+    font-size: 24px;
+    text-align: center;
+    margin-top: 0.3em;
+  }
+  @media screen and (max-width: 600px){
+    .degital {
+      top: 60px; bottom: auto;
+      right: 0; left: 0;
+      margin: auto;
+    }
+    #time {
+      font-size: 50px;
+    }
+    #date {
+      font-weight: 400;
+      font-size: 16px;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <canvas id="canvas2" width="800" height="800"></canvas>
+
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+    <defs>
+      <filter id="goo">
+        <!-- 下記の変換を合わせるとオブジェクトが引き合うようになる。 -->
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" /> <!-- めっちゃ霞ませる。ブラー -->
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 60 -9"/>  <!-- 色の変換 -->
+      </filter>
+    </defs>
+  </svg>
+
+    <div class="clockHands">
+      <div class="hour"></div>
+      <div class="min"></div>
+      <div class="sec"></div>
+      <div class="circles"></div>
+    </div>
+
+    <div class="degital">
+      <p id="time"></p>
+      <p id="date"></p>
+    </div>
+  </div>
+  <!-- .wrapper -->
+
+<script>
+class Clock {
+  constructor(){
+    this.lineHour = document.querySelector('.hour');
+    this.lineMin = document.querySelector('.min');
+    this.lineSec = document.querySelector('.sec');
+    this.timeTxt = document.querySelector('#time');
+    this.dateTxt = document.querySelector('#date');
+    this.box = document.querySelector('.circles');
+  }
+
+  init(){
+    this._createCircle();
+    // this.dedital.style.color = '#777';
+    this._resize();
+    setInterval(()=>{
+      this._update();
+    }, 50);
+  }
+
+  static getTime(){
+    const now  = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    return [now, h, m, s];
+  }
+
+  _update(){
+    const [now, h, m, s] = Clock.getTime();
+    const dayOfWeeks = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayOfWeeks[now.getDay()];
+    const monthes = ['January','February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'Octover', 'November', 'December']
+    const month = monthes[now.getMonth()];
+    const date = now.getDate();
+
+    //短針
+    const degH = h * (360 / 12) + m * (360 / 12 / 60);
+    //分針
+    const degM = m * (360 / 60);
+    //秒針
+    const degS = s * (360 / 60);
+
+    this.lineHour.style.transform = `rotate(${degH}deg)`;
+    this.lineMin.style.transform = `rotate(${degM}deg)`;
+    this.lineSec.style.transform = `rotate(${degS}deg)`;
+
+    const txtH = ('0' + h).slice(-2);
+    const txtM = ('0' + m).slice(-2);
+    this.timeTxt.innerHTML = `${txtH}:${txtM}`;
+    this.dateTxt.innerHTML = ` ${dayOfWeek}, ${month} ${date}`;
+  }
+
+  _createCircle(){
+    for(let i = 0; i < 12; i++){
+      let div = document.createElement('div');
+      this.box.appendChild(div);
+    }
+  }
+
+  _resize(){
+    for(let i = 0; i < 12; i++){
+      let x = Math.cos(radian(i * 30)) * RADIUS * 0.8;
+      let y = Math.sin(radian(i * 30)) * RADIUS * 0.8;
+      this.box.children[i].style.left = `calc(50% + ${x}px)`;
+      this.box.children[i].style.top = `calc(50% + ${y}px)`;
+    }
+  }
+}
+
+let STAGE_WIDTH = 800;
+let STAGE_HEIGHT = 800;
+let RADIUS = 200;
+let CENTER = { x: 400, y: 400};
+const MAX = 10;
+
+const circle= [];
+const dots = [];
+const DOT_MAX = 400;
+
+//----
+class Dot {
+
+  static setCenter(x, y){
+    Dot._centerX = x;
+    Dot._centerY = y;
+  }
+
+  constructor(){
+    Dot.setCenter(CENTER.x,CENTER.y);
+    this._init();
+  }
+  _init(){
+    this._x = Dot._centerX
+    this._y = Dot._centerY
+    this._r = Math.random() * 10;
+    this._rad = radian(Math.random() * 360);
+    this._vx = Math.cos(this._rad) * 1.5;
+    this._vy = Math.sin(this._rad) * 1.5;
+    let [h, s, l] = Circle.getColor();
+    this._color = `hsla(${h}, ${s}%, ${l}%, 0.5)`;
+  }
+
+  _draw(ctx){
+    this._update();
+    // ctx.restore();
+    ctx.beginPath();
+    ctx.fillStyle = this._color
+    ctx.arc(this._x, this._y, this._r, 0, radian(360));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  _update(){
+    this._x += this._vx;
+    this._y += this._vy;
+    if(
+      this._x > STAGE_WIDTH ||
+      this._x < 0 ||
+      this._y > STAGE_HEIGHT ||
+      this._y < 0
+    ){
+      this._init();
+    }
+  }
+}
+
+
+class Point {
+
+  get center(){
+    return {x: CENTER.x, y: CENTER.y};
+  }
+
+  get r(){
+    return RADIUS * this.scale;
+  }
+
+  constructor(r, rotate, scale){
+    this.x, this.y;
+    this.scale = scale;
+    this.rotate = rotate;
+    this.offsetX, this.offsetY;
+    this.angle = 0;
+  }
+
+  _update(){
+    this.angle += Math.random() * Math.random() * 5;
+    this.offsetX = Math.cos(radian(this.angle)) * 20; //xの動き幅を-20~20まで徐々に変化させる
+    this.offsetY = Math.sin(radian(this.angle)) * 10; //yの動き幅を-10~10まで徐々に変化させる
+
+    this.x = Math.cos(radian(this.rotate)) * this.r + this.center.x + this.offsetX; //X座標を更新
+    this.y = Math.sin(radian(this.rotate)) * this.r + this.center.y + this.offsetY; //Y座標を更新
+  }
+}
+
+class Circle {
+  
+  constructor(scale, color){
+    this.scale = scale;
+    this._color = color;
+    this._colorNum;
+    this._init();
+  }
+
+  _init(){
+    this._rotate = 360 / MAX;
+    this._point = [];
+    this._colorNum = Math.floor(Math.random() * 360);
+    for(let i = 0; i < MAX; i++){
+      this._point[i] =  new Point(RADIUS, this._rotate * i, this.scale);
+    }
+  }
+
+  _draw(ctx){
+    ctx.restore();
+    let [h, s, l] = Circle.getColor();
+    if(this._color) {
+      ctx.fillStyle = this._color;
+    } else {
+      // ctx.fillStyle = `hsla(${this._colorNum}, 50%, 25%, 0.5)`;
+      ctx.fillStyle = `hsla(${this._colorNum}, ${s}%, ${l}%, 0.5)`;
+    }
+    ctx.beginPath();
+    let xc1 = (this._point[0].x + this._point[MAX - 1].x) / 2;
+    let yc1 = (this._point[0].y + this._point[MAX - 1].y) / 2;
+
+    ctx.moveTo(xc1, yc1);
+    for(let i = 0; i < MAX - 1; i++){
+      let xc = (this._point[i].x + this._point[i + 1].x) / 2;
+      let yc = (this._point[i].y + this._point[i + 1].y) / 2;
+      ctx.quadraticCurveTo(this._point[i].x, this._point[i].y, xc, yc);
+    }
+    ctx.quadraticCurveTo(this._point[MAX - 1].x, this._point[MAX - 1].y, xc1, yc1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  static getColor(){
+    const [now, h, m, s] = Clock.getTime();
+
+    if(6 <= h || h <= 18){ //18時 ~ 翌6時までは彩度・冥途ともに一定
+      const pct = 10;
+    }
+    const pct  = ((h - 6) + (m / 60)) / 12;
+    const bgColor = Math.floor(Math.random() * 360); //50 ~ 100
+    const satulation = Math.floor(pct * 50) + 50; //50 ~ 100
+    const lightness = Math.floor(pct * 60) + 25; //25 ~ 85
+    return [bgColor, satulation, lightness];
+  }
+
+  _update(){
+    if(this._colorNum > 360) this._colorNum = 0;
+    this._colorNum += 0.05;
+    for(let i = 0; i < MAX; i++){
+      this._point[i]._update();
+    }
+  }
+}
+
+
+class Main {
+  constructor(){
+    this._init();
+  }
+
+  _init(){
+    this._canvas = document.getElementById("canvas");
+    this._ctx = this._canvas.getContext("2d");
+    this._canvas2 = document.getElementById("canvas2");
+    this._ctx2 = this._canvas2.getContext("2d");
+    this._dpr = window.devicePixelRatio || 1;
+  }
+
+  start(){
+    this._delegate = () => {
+      this.update();
+    }
+
+    window.addEventListener('mousemove', (e)=>{
+      e.preventDefault();
+      Dot.setCenter(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('resize', (e)=> {
+      this.resize(e);
+      clock._resize();
+    })
+    this.resize();
+    this._createCircle()
+    const clock = new Clock();
+    clock.init();
+    this.update();
+  }
+
+  resize(e){
+    STAGE_WIDTH = window.innerWidth;
+    STAGE_HEIGHT =window.innerHeight;
+
+    this._canvas.width = STAGE_WIDTH * this._dpr;
+    this._canvas.height = STAGE_HEIGHT * this._dpr;
+    this._ctx.scale(this._dpr, this._dpr);
+    this._canvas.style.width = STAGE_WIDTH + 'px';
+    this._canvas.style.height = STAGE_HEIGHT + 'px';
+
+    this._canvas2.width = STAGE_WIDTH * this._dpr;
+    this._canvas2.height = STAGE_HEIGHT * this._dpr;
+    this._ctx2.scale(this._dpr, this._dpr);
+    this._canvas2.style.width = STAGE_WIDTH + 'px';
+    this._canvas2.style.height = STAGE_HEIGHT + 'px';
+
+    CENTER.x = STAGE_WIDTH / 2;
+    CENTER.y = STAGE_HEIGHT / 2;
+
+    RADIUS = Math.min(STAGE_WIDTH, STAGE_HEIGHT) * 0.4;
+  }
+
+  update(){
+    for(let i = 0; i < 3; i++){
+      circle[i]._update();
+    }
+    this._draw();
+    if(dots.length <= DOT_MAX){
+      for(let i = 0; i < 3; i++){
+        dots.push(new Dot());
+      }
+    }
+    requestAnimationFrame(this._delegate);
+  }
+
+  _draw(){
+    this._ctx.clearRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    this._ctx2.clearRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+
+    // for(let i = 0; i < 3; i++){
+    //   circle[i]._draw(this._ctx);
+    // }
+    dots.forEach((d)=>{
+      d._draw(this._ctx2);
+    });
+    circle[0]._draw(this._ctx2);
+    circle[1]._draw(this._ctx);
+    circle[2]._draw(this._ctx);
+  }
+
+  _createCircle(){
+    for(let i = 0; i < 3; i++){
+      let scale = 1.00 - (i * 0.05);
+      let color;
+      if(i === 2) color = 'rgba(255,255,255,0.35)'
+      circle.push(new Circle(scale, color));
+    }
+  }
+}
+
+window.addEventListener('load', ()=>{
+  new Main().start();
+})
+// document.body.addEventListener('touchstart', (e)=>{
+//   e.preventDefault(); //スワイプで動かないようにする。
+// })
+
+
+
+//Utility
+function radian(val){
+  return val * Math.PI / 180;
+}
+
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
+</script>
+</body>
+</html>
