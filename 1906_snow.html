@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>snow</title>
+</head>
+<body>
+
+<div id="snow_canvas"></div>
+
+<script>
+(function(){
+'use strict';
+
+let STAGE_WIDTH = 1000;
+let STAGE_HEIGHT = 1000;
+const PAR_NUM = 100;
+const COLORS = ['#B7DAF9','#EAC6E3','#F9EAB7','#C1EAEB','#DBECFC'];
+
+class Snow {
+  constructor(){
+    this._init();
+  }
+
+  _init(){
+    this._x = Math.random() * STAGE_WIDTH;
+    this._y = Math.random() * STAGE_HEIGHT;
+    this._size = Math.floor(Math.random() * 5) + 3 ;
+    this._angle = 0;
+    this._color = COLORS[Math.floor(Math.random() * (COLORS.length))];
+  }
+
+  draw(ctx){
+    ctx.beginPath();
+    ctx.fillStyle = this._color;
+    ctx.arc(this._x, this._y, this._size, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  _update(){
+    this._radius = Math.random() * 0.5;
+    this._radian = this._angle * Math.PI / 180;
+    this._speedX = Math.sin(this._radian) * this._radius;
+    this._x += this._speedX;
+    this._y += 1;
+    this._angle += 2;
+
+    if(this._y > STAGE_HEIGHT){
+      this._init();
+      this._y = 0;
+    }
+  }
+}
+
+class Stage {
+  constructor(){
+    this._init();
+  }
+
+  _init(){
+    this._canvas = document.getElementById('snow_canvas').appendChild(document.createElement('canvas'));
+    this._ctx = this._canvas.getContext('2d');
+    this._canvas.width = STAGE_WIDTH;
+    this._canvas.height = STAGE_HEIGHT;
+    this._particles = [];
+  }
+
+  start(){
+    window.addEventListener('resize',(e) =>{
+      this._resize();
+    })
+    this._resize();
+    this._update();
+  }
+
+  _draw(){
+    this._ctx.clearRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    this._particles.forEach((snow) => {
+      snow.draw(this._ctx);
+    });
+  }
+
+  _update(){
+    this._create();
+    this._draw();
+    this._particles.forEach((snow) => {
+      snow._update();
+    });
+    requestAnimationFrame(() => {
+      this._update();
+    })
+  }
+
+  _create(){
+    if(this._particles.length < PAR_NUM){
+      this._particles.push(new Snow());
+    }
+  }
+
+  _resize(){
+    STAGE_WIDTH = this._canvas.width = window.innerWidth;
+    STAGE_HEIGHT = this._canvas.height = window.innerHeight;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  new Stage().start();
+  new Snow();
+});
+
+})();
+</script>
+</body>
+</html>

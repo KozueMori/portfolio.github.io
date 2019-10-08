@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Circle Challenge</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    background: #222;
+    position: relative;
+  }
+  .line-x {
+    width: 100vw;
+    height: 1px;
+    position: absolute;
+    top: 50%;
+    /* background: #eeeeee; */
+    opacity: 0.5;
+  }
+  .line-y {
+    width: 1px;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    /* background: #eeeeee; */
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div class="line-x"></div>
+  <div class="line-y"></div>
+
+<script>
+
+let STAGE_WIDTH = window.innerWidth;
+let STAGE_HEIGHT = window.innerHeight;
+
+class Main {
+  constructor(){
+    this._init();
+  }
+
+  _init(){
+    this._canvas = document.getElementById('canvas');
+    this._ctx = this._canvas.getContext('2d');
+    this._canvas.width = STAGE_WIDTH;
+    this._canvas.height = STAGE_HEIGHT;
+    this._centerX = STAGE_WIDTH / 2;
+    this._centerY = STAGE_HEIGHT / 2;
+    this._r = 150; // rasius
+    this._t = 0; // theta
+    this._p = 0; // phi
+    this._radian = Math.PI / 180;
+    this._step = 6;
+    this._pSpace = 6;
+    this._rx = 65;
+    this._ry = 0;
+    this._slant = -15; //傾き
+
+    this._shine = false;
+    this._velocity = 1;
+    this._accel = 0.1;
+
+  }
+
+  start(){
+    this._canvas.addEventListener('mousemove', (e) => {
+      this._action(e);
+    });
+    window.addEventListener('resize', (e) => {
+      this._resize();
+    });
+    this._resize();
+    this.update();
+  }
+
+  _resize(e){
+    STAGE_WIDTH = this._canvas.width = window.innerWidth;
+    STAGE_HEIGHT = this._canvas.height = window.innerHeight;
+  }
+
+  _update(){
+    if(this._shine && this._r <= 400){
+      this._velocity += this._accel;
+      this._r += this._velocity;
+      this._ry += 2;
+    } else {
+      this._ry += 0.5;
+    }
+  }
+
+  _draw(){
+    this._ctx.clearRect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    this._drawBall();
+
+  }
+
+  _drawBall(){
+    let jLength = 180 / this._step;
+    let iLength = 360 / this._pSpace;
+    for(let j = 0; j < jLength; j++){
+      this._p = 0;
+      for(let i = 0; i < iLength; i++){ // (r, t, p) -> (x, y, z) に変換
+        let x = this._r * Math.sin(this._t * this._radian) * Math.cos(this._p * this._radian);
+        let y = this._r * Math.sin(this._t * this._radian) * Math.sin(this._p * this._radian);
+        let z = this._r * Math.cos(this._t * this._radian);
+
+//x軸回転変換
+        let tx1 =   x;
+        let ty1 =   y * Math.cos(this._rx * this._radian) + z * Math.sin(this._rx * this._radian);
+        let tz1 =  -y * Math.sin(this._rx * this._radian) + z * Math.cos(this._rx * this._radian);
+
+//y軸回転変換
+        let tx2 =   tx1 * Math.cos(this._ry * this._radian) - tz1 * Math.sin(this._ry * this._radian);
+        let ty2 =   ty1;
+        let tz2 =   tx1 * Math.sin(this._ry * this._radian) + tz1 * Math.cos(this._ry * this._radian);
+
+//回転
+        let tx3 = tx2 * Math.cos(this._slant * this._radian) - ty2 * Math.sin(this._slant * this._radian);
+        let ty3 = tx2 * Math.sin(this._slant * this._radian) + ty2 * Math.cos(this._slant * this._radian);
+
+        this._ctx.fillStyle = `hsl(${Math.floor(Math.random() * 360)}, 90% ,50%)`;
+
+        if(this._shine){
+
+          this._ctx.fillRect(this._centerX + tx3, this._centerY + ty3, 4, 4);
+        } else {
+          this._ctx.fillRect(this._centerX + tx3, this._centerY + ty3, 2, 2);
+        }
+        this._p += this._pSpace;
+      }
+      this._t += this._step;
+    }
+  }
+
+  _action(e){
+    let x = e.clientX;
+    let y = e.clientY;
+    if(this._centerX - this._r < x && x < this._centerX + this._r && this._centerY - this._r < y && y < this._centerY + this._r) {
+      this._shine = true;
+    } else {
+      this._shine = false;
+    }
+  }
+
+  update(){
+    this._update();
+    this._draw();
+    requestAnimationFrame(() => {
+      this.update();
+    });
+  }
+
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  new Main().start();
+});
+</script>
+</body>
+</html>
